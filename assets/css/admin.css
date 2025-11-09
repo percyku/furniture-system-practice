@@ -854,6 +854,8 @@ body {
   -ms-flex-item-align: end;
   align-self: flex-end;
   margin-bottom: 12px;
+  /* border: none; */
+  background-color: transparent;
 }
 
 .orderPage-table {
@@ -883,7 +885,7 @@ body {
   cursor: pointer;
 }
 
-.delSingleOrder-Btn:hover {
+.delSingleOrder-Btn:hover:enabled {
   opacity: 0.8;
 }
 
@@ -903,5 +905,10 @@ body {
 
 .orderTableWrap::-webkit-scrollbar {
   display: none;
+}
+
+.disabled {
+  pointer-events: none;
+  cursor: default;
 }
 /*# sourceMappingURL=all.css.map */
