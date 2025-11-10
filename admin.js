@@ -40,7 +40,7 @@ function errorMsg(msg) {
   });
 }
 
-let recordOrder = [];
+let recordOrder = []; //collect data from renderOrder(orders)
 
 const orderBody = document.querySelector(".orderPage-table tbody");
 
@@ -58,7 +58,7 @@ discardAllOrderItemBtn.addEventListener("click", (e) => {
     return;
   }
 
-  disAllOrderListBtn();
+  disableAllOrderListBtn();
 
   axios
     .delete(`${baseUrl}${api_path}/orders`, {
@@ -129,8 +129,8 @@ async function renderOrder(orders) {
     .join("");
 
   try {
-    await renderorderStatus();
-    await renderDeleteSingleOrderItem();
+    await createOrderStatusListener();
+    await createDeleteSingleOrderItemListener();
   } catch (error) {
     errorMsg(error);
     init();
@@ -195,7 +195,7 @@ function renderCart(orders) {
   });
 }
 
-async function renderorderStatus() {
+async function createOrderStatusListener() {
   let orderStatus = document.querySelectorAll(".orderStatus");
   orderStatus.forEach((item) => {
     item.addEventListener("click", (e) => {
@@ -203,19 +203,19 @@ async function renderorderStatus() {
 
       let status = e.target.text === "已處理" ? false : true;
 
-      disAllOrderListBtn();
+      disableAllOrderListBtn();
       editOrderItemStautAndRenderOrders(e.target.dataset.id, status);
     });
   });
 }
 
-async function renderDeleteSingleOrderItem() {
+async function createDeleteSingleOrderItemListener() {
   let delSingleOrderBtns = document.querySelectorAll(".delSingleOrder-Btn");
   delSingleOrderBtns.forEach((item) => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
 
-      disAllOrderListBtn();
+      disableAllOrderListBtn();
       deleteOrderItemAndRenderOrders(e.target.dataset.id);
     });
   });
@@ -262,7 +262,8 @@ function deleteOrderItemAndRenderOrders(orderId) {
     });
 }
 
-function disAllOrderListBtn() {
+//to avoid continue clicking
+function disableAllOrderListBtn() {
   document.querySelectorAll(".orderStatus").forEach((item) => {
     item.children[0].setAttribute("class", "disabled");
   });

@@ -2,6 +2,36 @@ const baseUrl = "https://livejs-api.hexschool.io/api/livejs/v1/customer/";
 const api_path = "percyku19api";
 const token = "KDdHk6jfkCPVofZFXJVGHm7CCbg2";
 
+const constraints = {
+  姓名: {
+    presence: {
+      message: "是必填欄位",
+    },
+  },
+  電話: {
+    presence: {
+      message: "是必填欄位",
+    },
+    length: {
+      minimum: 8,
+      message: "號碼需超過 8 碼",
+    },
+  },
+  信箱: {
+    presence: {
+      message: "是必填欄位",
+    },
+    email: {
+      message: "格式有誤",
+    },
+  },
+  寄送地址: {
+    presence: {
+      message: "是必填欄位",
+    },
+  },
+};
+
 const Toast = Swal.mixin({
   toast: true,
   position: "top-end",
@@ -40,39 +70,10 @@ function errorMsg(msg) {
   });
 }
 
-const constraints = {
-  姓名: {
-    presence: {
-      message: "是必填欄位",
-    },
-  },
-  電話: {
-    presence: {
-      message: "是必填欄位",
-    },
-    length: {
-      minimum: 8,
-      message: "號碼需超過 8 碼",
-    },
-  },
-  信箱: {
-    presence: {
-      message: "是必填欄位",
-    },
-    email: {
-      message: "格式有誤",
-    },
-  },
-  寄送地址: {
-    presence: {
-      message: "是必填欄位",
-    },
-  },
-};
+let recordProducts = []; //collect data from init()
+let recordCart = []; //collect data from renderCart()
 
-let recordProducts = [];
-let recordCart = [];
-
+//get all prodcut item , render product and select item
 const productList = document.querySelector(".productWrap");
 const productSelect = document.querySelector(".productSelect");
 productSelect.addEventListener("change", (e) => {
@@ -136,15 +137,13 @@ async function addCartItem(productId, quantity = 1) {
   try {
     disableCartAllBtn();
     disabelShoppingItemBtn();
+    //to find last product item qty
     let myCart = await getCart();
     qty = myCart.carts.find((item) => item.product.id === productId)?.quantity;
     qty = qty == undefined ? 0 : qty;
   } catch (error) {
     errorMsg(error);
   }
-
-  enableCartAllBtn();
-  enableShoppingItemBtn();
 
   axios
     .post(`${baseUrl}${api_path}/carts`, {
@@ -155,9 +154,12 @@ async function addCartItem(productId, quantity = 1) {
     })
     .then(function (response) {
       successfulMsg("add in cart");
+      enableShoppingItemBtn();
       renderCart(response.data);
     })
     .catch((error) => {
+      enableCartAllBtn();
+      enableShoppingItemBtn();
       errorMsg(error);
     });
 }
@@ -248,9 +250,9 @@ async function renderCart(carts) {
     .join("");
 
   try {
-    await renderDiscardBtn();
-    await renderAddBtn();
-    await renderRemoveBtn();
+    await createDiscardBtnListener();
+    await createAddBtnListener();
+    await createMinusBtnListener();
   } catch (error) {
     errorMsg(error);
   } finally {
@@ -258,7 +260,30 @@ async function renderCart(carts) {
   }
 }
 
-async function renderAddBtn() {
+//delete single item from cart
+async function createDiscardBtnListener() {
+  let discardBtn = document.querySelectorAll(".discardBtn");
+  discardBtn.forEach((item) => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      disableCartAllBtn();
+      disabelShoppingItemBtn();
+
+      axios
+        .delete(`${baseUrl}${api_path}/carts/${e.target.dataset.id}`)
+        .then((res) => {
+          successfulMsg("Remove item in cart successfully");
+          renderCart(res.data);
+        })
+        .catch((error) => {
+          errorMsg(error);
+        });
+    });
+  });
+}
+
+//plus qty from single item from cart
+async function createAddBtnListener() {
   let addBtn = document.querySelectorAll(".add-btn");
   addBtn.forEach((item) => {
     item.addEventListener("click", (e) => {
@@ -272,7 +297,8 @@ async function renderAddBtn() {
   });
 }
 
-async function renderRemoveBtn() {
+//minus qty from single item from cart
+async function createMinusBtnListener() {
   let addBtn = document.querySelectorAll(".remove-btn");
   addBtn.forEach((item) => {
     item.addEventListener("click", (e) => {
@@ -304,27 +330,7 @@ function modifyOrderProductQtyAndRenderCart(productId, qty) {
     });
 }
 
-async function renderDiscardBtn() {
-  let discardBtn = document.querySelectorAll(".discardBtn");
-  discardBtn.forEach((item) => {
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      disableCartAllBtn();
-      disabelShoppingItemBtn();
-
-      axios
-        .delete(`${baseUrl}${api_path}/carts/${e.target.dataset.id}`)
-        .then((res) => {
-          successfulMsg("Remove item in cart successfully");
-          renderCart(res.data);
-        })
-        .catch((error) => {
-          errorMsg(error);
-        });
-    });
-  });
-}
-
+//delete all items from cart
 const discardAllBtn = document.querySelector(".discardAllBtn");
 discardAllBtn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -341,6 +347,7 @@ discardAllBtn.addEventListener("click", (e) => {
     });
 });
 
+//to avoid  clikcing btn continually
 function disableCartAllBtn() {
   document.querySelectorAll(".shoppingCart button").forEach((item) => {
     item.setAttribute("disabled", true);
@@ -364,22 +371,6 @@ function enableShoppingItemBtn() {
     item.removeAttribute("disabled");
   });
 }
-
-async function init() {
-  try {
-    let productList = await getProducts();
-    recordProducts = productList;
-    renderProduct(productList);
-    getCategories(productList);
-
-    let myCart = await getCart();
-    renderCart(myCart);
-  } catch (error) {
-    errorMsg(error);
-  }
-}
-
-init();
 
 const form = document.querySelector(".orderInfo-form");
 const orderInfoBtn = document.querySelector(".orderInfo-btn");
@@ -417,14 +408,14 @@ function showErrors(errors) {
     item.textContent = errors[item.dataset.message];
   });
 }
-// 監控所有 input 的操作
+
 inputs.forEach((item) => {
   item.addEventListener("change", function (e) {
     e.preventDefault();
     let targetName = item.name;
     let errors = validate(form, constraints);
     item.nextElementSibling.textContent = "";
-    // 針對正在操作的欄位呈現警告訊息
+
     if (errors) {
       document.querySelector(`[data-message='${targetName}']`).textContent =
         errors[targetName];
@@ -469,3 +460,19 @@ function addOrder() {
       orderInfoBtn.removeAttribute("disabled");
     });
 }
+
+async function init() {
+  try {
+    let productList = await getProducts();
+    recordProducts = productList;
+    renderProduct(productList);
+    getCategories(productList);
+
+    let myCart = await getCart();
+    renderCart(myCart);
+  } catch (error) {
+    errorMsg(error);
+  }
+}
+
+init();
