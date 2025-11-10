@@ -2,6 +2,44 @@ const baseUrl = "https://livejs-api.hexschool.io/api/livejs/v1/customer/";
 const api_path = "percyku19api";
 const token = "KDdHk6jfkCPVofZFXJVGHm7CCbg2";
 
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 1000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+});
+
+const Toast2 = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+});
+
+function successfulMsg(msg) {
+  Toast.fire({
+    icon: "success",
+    title: msg,
+  });
+}
+
+function errorMsg(msg) {
+  Toast2.fire({
+    icon: "error",
+    title: msg,
+  });
+}
+
 const constraints = {
   姓名: {
     presence: {
@@ -60,7 +98,7 @@ async function getProducts() {
       return res.data.products;
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 }
 
@@ -102,27 +140,25 @@ async function addCartItem(productId, quantity = 1) {
     qty = myCart.carts.find((item) => item.product.id === productId)?.quantity;
     qty = qty == undefined ? 0 : qty;
   } catch (error) {
-    console.log(error);
+    errorMsg(error);
   }
 
   enableCartAllBtn();
   enableShoppingItemBtn();
 
   axios
-    .post(
-      `https://livejs-api.hexschool.io/api/livejs/v1/customer/${api_path}/carts`,
-      {
-        data: {
-          productId: productId,
-          quantity: qty + 1,
-        },
-      }
-    )
+    .post(`${baseUrl}${api_path}/carts`, {
+      data: {
+        productId: productId,
+        quantity: qty + 1,
+      },
+    })
     .then(function (response) {
+      successfulMsg("add in cart");
       renderCart(response.data);
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 }
 
@@ -156,7 +192,7 @@ async function getCart() {
       return res.data;
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
       res.data = [];
     });
 }
@@ -216,7 +252,7 @@ async function renderCart(carts) {
     await renderAddBtn();
     await renderRemoveBtn();
   } catch (error) {
-    console.log(error);
+    errorMsg(error);
   } finally {
     enableShoppingItemBtn();
   }
@@ -260,10 +296,11 @@ function modifyOrderProductQtyAndRenderCart(productId, qty) {
       },
     })
     .then((res) => {
+      successfulMsg("Modify item in cart successfully");
       renderCart(res.data);
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 }
 
@@ -278,10 +315,11 @@ async function renderDiscardBtn() {
       axios
         .delete(`${baseUrl}${api_path}/carts/${e.target.dataset.id}`)
         .then((res) => {
+          successfulMsg("Remove item in cart successfully");
           renderCart(res.data);
         })
         .catch((error) => {
-          console.log(error);
+          errorMsg(error);
         });
     });
   });
@@ -295,10 +333,11 @@ discardAllBtn.addEventListener("click", (e) => {
   axios
     .delete(`${baseUrl}${api_path}/carts`)
     .then((res) => {
+      successfulMsg("Remove all items in cart successfully");
       renderCart(res.data);
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 });
 
@@ -336,7 +375,7 @@ async function init() {
     let myCart = await getCart();
     renderCart(myCart);
   } catch (error) {
-    console.log(error);
+    errorMsg(error);
   }
 }
 
@@ -356,8 +395,8 @@ function verification(e) {
   e.preventDefault();
   if (recordCart.length === 0) {
     Swal.fire({
-      icon: "error",
-      title: "Oops...",
+      icon: "warning",
+      title: "Sorry....",
       text: "Shopping cart items are empty",
     });
     return;
@@ -418,12 +457,13 @@ function addOrder() {
     .post(url, data)
     .then((res) => {
       data = {};
+      successfulMsg("Submit order successfully");
       init();
       orderInfoBtn.removeAttribute("disabled");
       form.reset();
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
       enableCartAllBtn();
       enableShoppingItemBtn();
       orderInfoBtn.removeAttribute("disabled");

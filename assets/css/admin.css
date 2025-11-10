@@ -770,7 +770,8 @@ body {
 
 .discardAllBtn:hover {
   background-color: #000000;
-  color: #ffffff;
+  /* color: #ffffff; */
+  color: #6a33f8;
 }
 
 .orderInfo {

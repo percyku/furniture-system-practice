@@ -2,19 +2,57 @@ const baseUrl = "https://livejs-api.hexschool.io/api/livejs/v1/admin/";
 const api_path = "percyku19api";
 const token = "KDdHk6jfkCPVofZFXJVGHm7CCbg2";
 
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 1000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+});
+
+const Toast2 = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+});
+
+function successfulMsg(msg) {
+  Toast.fire({
+    icon: "success",
+    title: msg,
+  });
+}
+
+function errorMsg(msg) {
+  Toast2.fire({
+    icon: "error",
+    title: msg,
+  });
+}
+
 let recordOrder = [];
 
 const orderBody = document.querySelector(".orderPage-table tbody");
 
-const discardAllBtn = document.querySelector(".discardAllBtn");
+const discardAllOrderItemBtn = document.querySelector(".discardAllBtn");
 
-discardAllBtn.addEventListener("click", (e) => {
+discardAllOrderItemBtn.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (recordOrder.length === 0) {
     Swal.fire({
-      icon: "error",
-      title: "Oops...",
+      icon: "warning",
+      title: "Sorry....",
       text: "Order items are empty",
     });
     return;
@@ -29,12 +67,13 @@ discardAllBtn.addEventListener("click", (e) => {
       },
     })
     .then((res) => {
-      discardAllBtn.removeAttribute("disabled");
+      discardAllOrderItemBtn.removeAttribute("disabled");
+      successfulMsg(`Delete all order items successfully`);
       renderOrder(res.data.orders);
     })
     .catch((error) => {
-      discardAllBtn.removeAttribute("disabled");
-      console.log(error);
+      discardAllOrderItemBtn.removeAttribute("disabled");
+      errorMsg(error);
     });
 });
 
@@ -93,7 +132,7 @@ async function renderOrder(orders) {
     await renderorderStatus();
     await renderDeleteSingleOrderItem();
   } catch (error) {
-    console.log(error);
+    errorMsg(error);
     init();
   } finally {
     enableAllOrderListBtn();
@@ -199,10 +238,11 @@ function editOrderItemStautAndRenderOrders(orderId, status) {
       }
     )
     .then((res) => {
+      successfulMsg("Update order status successfully");
       renderOrder(res.data.orders);
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 }
 
@@ -214,10 +254,11 @@ function deleteOrderItemAndRenderOrders(orderId) {
       },
     })
     .then((res) => {
+      successfulMsg(`Delete order id ${orderId} successfully`);
       renderOrder(res.data.orders);
     })
     .catch((error) => {
-      console.log(error);
+      errorMsg(error);
     });
 }
 
@@ -230,7 +271,7 @@ function disAllOrderListBtn() {
     item.setAttribute("disabled", true);
   });
 
-  discardAllBtn.setAttribute("disabled", true);
+  discardAllOrderItemBtn.setAttribute("disabled", true);
 }
 
 function enableAllOrderListBtn() {
@@ -242,7 +283,7 @@ function enableAllOrderListBtn() {
     item.removeAttribute("disabled");
   });
 
-  discardAllBtn.removeAttribute("disabled");
+  discardAllOrderItemBtn.removeAttribute("disabled");
 }
 
 async function init() {
@@ -250,7 +291,7 @@ async function init() {
     let orders = await getOrderList();
     renderOrder(orders);
   } catch (error) {
-    console.log(error);
+    errorMsg(error);
   }
 }
 
